@@ -1,19 +1,21 @@
 package com.ecobazaar.service;
 
-import com.ecobazaar.model.User;
-import com.ecobazaar.repository.UserRepository;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import com.ecobazaar.model.User;
+import com.ecobazaar.repository.UserRepository;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 
 @Service
 public class AuthService {
@@ -66,7 +68,7 @@ public class AuthService {
             }
 
             // Validate role
-            if (!user.getRole().equals("customer") && !user.getRole().equals("seller")) {
+            if (!user.getRole().equals("customer") && !user.getRole().equals("seller") && !user.getRole().equals("admin")) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid role"));
             }
 
@@ -91,6 +93,21 @@ public class AuthService {
             
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Registration failed: " + e.getMessage()));
+        }
+    }
+
+    public ResponseEntity<?> addAdminUser() {
+        try {
+            User adminUser = new User("admin@gmail.com", passwordEncoder.encode("admin"), "admin");
+            
+            if (userRepository.existsByEmail(adminUser.getEmail())) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Admin user already exists"));
+            }
+
+            userRepository.save(adminUser);
+            return ResponseEntity.ok(Map.of("message", "Admin user created successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Failed to create admin user: " + e.getMessage()));
         }
     }
 

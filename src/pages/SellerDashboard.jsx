@@ -85,7 +85,36 @@ const SellerDashboard = () => {
   });
 
   const [newEcoTag, setNewEcoTag] = useState('');
+  const [backendProducts, setBackendProducts] = useState([]);
 
+  // Fetch products from backend
+  const fetchProducts = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/products/my-products', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const result = await response.json();
+      if (response.ok) {
+        setBackendProducts(result.products || []);
+      } else {
+        console.error('Failed to fetch products:', result.error);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
+
+  // Fetch products when component mounts
+  React.useEffect(() => {
+    if (activeSection === 'products') {
+      fetchProducts();
+    }
+  }, [activeSection]);
 
   const handleSelectItem = (type, id) => {
     if (type === 'products') {
@@ -140,24 +169,58 @@ const SellerDashboard = () => {
     return Math.max(0.5, footprint).toFixed(1);
   };
 
-  const handleSubmitProduct = (e) => {
+  const handleSubmitProduct = async (e) => {
     e.preventDefault();
-    const carbonFootprint = calculateCarbonFootprint();
-    const productData = { ...productForm, carbonFootprint };
-    console.log('Product submitted:', productData);
-    alert('Product submitted successfully! Carbon footprint: ' + carbonFootprint + ' kg CO₂');
-    // Reset form
-    setProductForm({
-      name: '',
-      description: '',
-      price: '',
-      category: '',
-      materials: '',
-      manufacturing: '',
-      shippingMethod: 'standard',
-      ecoTags: [],
-      images: []
-    });
+    try {
+      const carbonFootprint = calculateCarbonFootprint();
+      const productData = {
+        name: productForm.name,
+        description: productForm.description,
+        price: parseFloat(productForm.price),
+        category: productForm.category,
+        materials: productForm.materials,
+        manufacturing: productForm.manufacturing,
+        shippingMethod: productForm.shippingMethod,
+        ecoTags: productForm.ecoTags,
+        carbonFootprint: parseFloat(carbonFootprint),
+        inventory: 100 // Default inventory
+      };
+
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/products/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(productData)
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert('Product submitted successfully! Carbon footprint: ' + carbonFootprint + ' kg CO₂');
+        // Reset form
+        setProductForm({
+          name: '',
+          description: '',
+          price: '',
+          category: '',
+          materials: '',
+          manufacturing: '',
+          shippingMethod: 'standard',
+          ecoTags: [],
+          images: []
+        });
+        // Refresh products list
+        fetchProducts();
+      } else {
+        alert('Failed to add product: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error submitting product:', error);
+      alert('Failed to add product. Please try again.');
+    }
   };
 
   const handleOrderAction = (orderId, action) => {
