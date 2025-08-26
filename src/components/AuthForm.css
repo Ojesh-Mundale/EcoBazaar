@@ -1,0 +1,150 @@
+/* EcoBazaar Auth Form - Compact Design */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2d5a27 0%, #4a7c59 50%, #66bb6a 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.auth-container {
+  max-width: 350px;
+  width: auto;
+  margin: 0 auto;
+  padding: 10px; /* Reduced padding */
+  background: white;
+  border-radius: 20px 20px 30px 30px; /* More curvy edges from bottom */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.auth-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #2d5a27;
+}
+
+.form-group {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d5a27;
+  text-align: left;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #4a7c59;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  color: #2d5a27;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #2d5a27;
+  outline: none;
+}
+
+.auth-button {
+  width: 100%;
+  padding: 12px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.auth-button:hover {
+  background: #45a049;
+}
+
+.toggle-link {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.toggle-link button {
+  background: none;
+  border: none;
+  color: #4a7c59;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.toggle-link button:hover {
+  color: #2d5a27;
+}
+
+.error-message,
+.success-message {
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  width: 100%;
+}
+
+.error-message {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+.success-message {
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 15px;
+    margin: 10px;
+  }
+  
+  .auth-header h2 {
+    font-size: 22px;
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  .auth-button {
+    padding: 10px;
+    font-size: 15px;
+  }
+}

@@ -1,0 +1,29 @@
+/* Reset default styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  padding:0px;
+}
+
+.App {
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Auth form styles for non-dashboard routes */
+.auth-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 65vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+/* Dashboard will handle its own full-screen layout */

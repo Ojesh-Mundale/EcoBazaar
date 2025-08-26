@@ -1,0 +1,25 @@
+# Node.js dependencies
+node_modules/
+
+# Java build artifacts
+target/
+*.class
+
+# IDE files
+.idea/
+*.iml
+
+# Environment files
+.env
+.env.local
+
+# Log files
+*.log
+
+# OS-specific files
+Thumbs.db
+.DS_Store
+
+# Build outputs
+dist/
+build/
