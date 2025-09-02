@@ -726,3 +726,93 @@
     flex-direction: column;
   }
 }
+
+/* Carbon Analytics Report Styles */
+.report-table-section {
+  margin-top: 24px;
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.report-table-section h3 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.report-placeholder {
+  background: #f8f9fa;
+  padding: 40px;
+  border-radius: 12px;
+  text-align: center;
+  border: 2px dashed #dee2e6;
+}
+
+.report-placeholder h3 {
+  margin: 0 0 16px 0;
+  color: #495057;
+  font-size: 18px;
+}
+
+.report-placeholder p {
+  margin: 8px 0;
+  color: #6c757d;
+  line-height: 1.5;
+}
+
+.report-loading {
+  background: #f8f9fa;
+  padding: 40px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.report-loading h3 {
+  margin: 0 0 16px 0;
+  color: #495057;
+  font-size: 18px;
+}
+
+.report-loading p {
+  margin: 0;
+  color: #6c757d;
+}
+
+/* Carbon Intensity Badges */
+.carbon-badge.none {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.carbon-badge.low {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.carbon-badge.medium {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.carbon-badge.high {
+  background: #f44336;
+  color: white;
+}
+
+/* Responsive adjustments for analytics */
+@media (max-width: 768px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .report-table-section {
+    overflow-x: auto;
+  }
+  
+  .data-table {
+    min-width: 600px;
+  }
+}

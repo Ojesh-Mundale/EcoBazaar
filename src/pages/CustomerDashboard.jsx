@@ -14,20 +14,11 @@ const CustomerDashboard = () => {
     leaderboardPosition: 12
   });
   
-  const [orders, setOrders] = useState([
-    { id: 1, product: 'Organic Cotton T-Shirt', price: 29.99, status: 'Delivered', date: '2024-01-15', carbonSaved: 2.1 },
-    { id: 2, product: 'Bamboo Toothbrush', price: 12.99, status: 'Pending', date: '2024-01-16', carbonSaved: 0.8 },
-    { id: 3, product: 'Recycled Notebook', price: 8.99, status: 'Shipped', date: '2024-01-14', carbonSaved: 0.5 }
-  ]);
+  const [orders, setOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
 
-  const [products, setProducts] = useState([
-    { id: 1, name: 'Organic Cotton T-Shirt', price: 29.99, category: 'Fashion', carbonFootprint: 1.2, ecoRating: 'A', rating: 4.8, image: '👕' },
-    { id: 2, name: 'Bamboo Toothbrush', price: 12.99, category: 'Personal Care', carbonFootprint: 0.8, ecoRating: 'A+', rating: 4.9, image: '🪥' },
-    { id: 3, name: 'Recycled Notebook', price: 8.99, category: 'Office', carbonFootprint: 0.5, ecoRating: 'A', rating: 4.5, image: '📓' },
-    { id: 4, name: 'Hemp Bag', price: 24.99, category: 'Accessories', carbonFootprint: 3.2, ecoRating: 'C', rating: 4.2, image: '👜' },
-    { id: 5, name: 'Solar Charger', price: 49.99, category: 'Electronics', carbonFootprint: 2.1, ecoRating: 'B', rating: 4.6, image: '🔋' },
-    { id: 6, name: 'Organic Soap', price: 6.99, category: 'Personal Care', carbonFootprint: 0.3, ecoRating: 'A+', rating: 4.7, image: '🧼' }
-  ]);
+  const [products, setProducts] = useState([]);
 
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,11 +35,12 @@ const CustomerDashboard = () => {
   });
   const [showPayment, setShowPayment] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const categories = ['all', 'Fashion', 'Personal Care', 'Office', 'Accessories', 'Electronics'];
 
   const filteredProducts = products
-    .filter(product => 
+    .filter(product =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
       (selectedCategory === 'all' || product.category === selectedCategory)
     )
@@ -57,7 +49,11 @@ const CustomerDashboard = () => {
         case 'price': return a.price - b.price;
         case 'rating': return b.rating - a.rating;
         case 'carbon': return a.carbonFootprint - b.carbonFootprint;
-        default: return b.ecoRating.localeCompare(a.ecoRating);
+        default:
+          // Handle null/undefined ecoRating values
+          const aRating = a.ecoRating || 'Z';
+          const bRating = b.ecoRating || 'Z';
+          return bRating.localeCompare(aRating);
       }
     });
 
@@ -81,15 +77,56 @@ const CustomerDashboard = () => {
     setShowPayment(true);
   };
 
-  const handlePaymentSubmit = (e) => {
+  const handlePaymentSubmit = async (e) => {
     e.preventDefault();
-    // Process payment logic here
-    setOrderSuccess(true);
-    setCart([]);
-    setTimeout(() => {
-      setShowPayment(false);
-      setOrderSuccess(false);
-    }, 3000);
+    setIsProcessingPayment(true);
+
+    try {
+      const token = localStorage.getItem('token');
+
+      // Prepare order data
+      const orderData = {
+        items: cart.map(item => ({
+          productId: item.id,
+          productName: item.name,
+          shopName: item.shopName,
+          quantity: item.quantity,
+          price: item.price,
+          carbonFootprint: item.carbonFootprint
+        })),
+        totalAmount: getCartTotal(),
+        shippingAddress: `${checkoutData.address}, ${checkoutData.city}, ${checkoutData.zip}`,
+        paymentMethod: 'Credit Card'
+      };
+
+      const response = await fetch('http://localhost:5000/api/orders/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsProcessingPayment(false);
+        setOrderSuccess(true);
+        setCart([]);
+        setTimeout(() => {
+          setShowPayment(false);
+          setOrderSuccess(false);
+        }, 3000);
+      } else {
+        alert('Failed to create order: ' + (data.error || 'Unknown error'));
+        setIsProcessingPayment(false);
+      }
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Failed to create order. Please try again.');
+      setIsProcessingPayment(false);
+    }
   };
 
   const renderDashboard = () => (
@@ -107,7 +144,7 @@ const CustomerDashboard = () => {
         </div>
         <div className="stat-card">
           <h3>Total Spent</h3>
-          <span className="stat-number">Rs{customerStats.totalSpent}</span>
+          <span className="stat-number">Rs {customerStats.totalSpent}</span>
         </div>
         <div className="stat-card">
           <h3>Loyalty Points</h3>
@@ -176,20 +213,27 @@ const CustomerDashboard = () => {
       <div className="products-grid">
         {filteredProducts.map(product => (
           <div key={product.id} className="product-card">
-            <div className="product-image">{product.image}</div>
+            <div className="product-image">
+              {product.imageUrls && product.imageUrls.length > 0 ? (
+                <img src={product.imageUrls[0]} alt={product.name} />
+              ) : (
+                <span role="img" aria-label="product">{product.image || '📦'}</span>
+              )}
+            </div>
             <h3>{product.name}</h3>
             <p className="product-category">{product.category}</p>
+            <p className="product-shopname">Shop: {product.shopName}</p>
             <p className="product-price">Rs{product.price}</p>
             <div className="product-metrics">
-              <span className={`eco-rating ${product.ecoRating.toLowerCase()}`}>
-                {product.ecoRating} Eco Rating
+              <span className={`eco-rating ${product.ecoRating ? product.ecoRating.toLowerCase() : 'a'}`}>
+                {product.ecoRating || 'A'} Eco Rating
               </span>
               <span className="carbon-footprint">
                 {product.carbonFootprint} kg CO₂
               </span>
             </div>
             <div className="product-rating">
-              {'⭐'.repeat(Math.floor(product.rating))} ({product.rating})
+              {'⭐'.repeat(Math.floor(product.rating || 0))} ({product.rating || 0})
             </div>
             <button 
               className="add-to-cart-btn"
@@ -252,81 +296,89 @@ const CustomerDashboard = () => {
   const renderPayment = () => (
     <div className="payment-content">
       <h2>Payment Details</h2>
-      <form onSubmit={handlePaymentSubmit} className="payment-form">
-        <div className="form-group">
-          <label>Full Name</label>
-          <input
-            type="text"
-            required
-            value={checkoutData.name}
-            onChange={(e) => setCheckoutData({...checkoutData, name: e.target.value})}
-          />
+      {isProcessingPayment ? (
+        <div className="payment-processing">
+          <div className="processing-spinner"></div>
+          <p>Processing your payment...</p>
+          <p>Please do not refresh the page</p>
         </div>
-        <div className="form-group">
-          <label>Address</label>
-          <input
-            type="text"
-            required
-            value={checkoutData.address}
-            onChange={(e) => setCheckoutData({...checkoutData, address: e.target.value})}
-          />
-        </div>
-        <div className="form-row">
+      ) : (
+        <form onSubmit={handlePaymentSubmit} className="payment-form">
           <div className="form-group">
-            <label>City</label>
+            <label>Full Name</label>
             <input
               type="text"
               required
-              value={checkoutData.city}
-              onChange={(e) => setCheckoutData({...checkoutData, city: e.target.value})}
+              value={checkoutData.name}
+              onChange={(e) => setCheckoutData({...checkoutData, name: e.target.value})}
             />
           </div>
           <div className="form-group">
-            <label>ZIP Code</label>
+            <label>Address</label>
             <input
               type="text"
               required
-              value={checkoutData.zip}
-              onChange={(e) => setCheckoutData({...checkoutData, zip: e.target.value})}
+              value={checkoutData.address}
+              onChange={(e) => setCheckoutData({...checkoutData, address: e.target.value})}
             />
           </div>
-        </div>
-        <div className="form-group">
-          <label>Card Number</label>
-          <input
-            type="text"
-            placeholder="1234 5678 9012 3456"
-            required
-            value={checkoutData.cardNumber}
-            onChange={(e) => setCheckoutData({...checkoutData, cardNumber: e.target.value})}
-          />
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Expiry Date</label>
-            <input
-              type="text"
-              placeholder="MM/YY"
-              required
-              value={checkoutData.expiry}
-              onChange={(e) => setCheckoutData({...checkoutData, expiry: e.target.value})}
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label>City</label>
+              <input
+                type="text"
+                required
+                value={checkoutData.city}
+                onChange={(e) => setCheckoutData({...checkoutData, city: e.target.value})}
+              />
+            </div>
+            <div className="form-group">
+              <label>ZIP Code</label>
+              <input
+                type="text"
+                required
+                value={checkoutData.zip}
+                onChange={(e) => setCheckoutData({...checkoutData, zip: e.target.value})}
+              />
+            </div>
           </div>
           <div className="form-group">
-            <label>CVV</label>
+            <label>Card Number</label>
             <input
               type="text"
-              placeholder="123"
+              placeholder="1234 5678 9012 3456"
               required
-              value={checkoutData.cvv}
-              onChange={(e) => setCheckoutData({...checkoutData, cvv: e.target.value})}
+              value={checkoutData.cardNumber}
+              onChange={(e) => setCheckoutData({...checkoutData, cardNumber: e.target.value})}
             />
           </div>
-        </div>
-        <button type="submit" className="pay-now-btn">
-          Pay Now - Rs{getCartTotal().toFixed(2)}
-        </button>
-      </form>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Expiry Date</label>
+              <input
+                type="text"
+                placeholder="MM/YY"
+                required
+                value={checkoutData.expiry}
+                onChange={(e) => setCheckoutData({...checkoutData, expiry: e.target.value})}
+              />
+            </div>
+            <div className="form-group">
+              <label>CVV</label>
+              <input
+                type="text"
+                placeholder="123"
+                required
+                value={checkoutData.cvv}
+                onChange={(e) => setCheckoutData({...checkoutData, cvv: e.target.value})}
+              />
+            </div>
+          </div>
+          <button type="submit" className="pay-now-btn">
+            Pay Now - Rs{getCartTotal().toFixed(2)}
+          </button>
+        </form>
+      )}
     </div>
   );
 
@@ -348,27 +400,113 @@ const CustomerDashboard = () => {
     </div>
   );
 
+  const fetchOrders = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/orders/my-orders', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setOrders(data.orders || []);
+      } else {
+        console.error('Failed to fetch orders:', data.error);
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    }
+  };
+
+  const handleViewOrderDetails = (order) => {
+    setSelectedOrder(order);
+    setShowOrderDetails(true);
+  };
+
+  const handleTrackOrder = (order) => {
+    // For now, just show an alert with tracking info
+    alert(`Tracking Number: ${order.trackingNumber}\nStatus: ${order.status}\nEstimated Delivery: ${order.deliveryDate || 'TBD'}`);
+  };
+
+  const renderOrderDetails = () => (
+    <div className="order-details-modal">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h2>Order Details</h2>
+          <button className="close-btn" onClick={() => setShowOrderDetails(false)}>×</button>
+        </div>
+        {selectedOrder && (
+          <div className="order-details">
+            <div className="order-info">
+              <p><strong>Order ID:</strong> {selectedOrder.id}</p>
+              <p><strong>Tracking Number:</strong> {selectedOrder.trackingNumber}</p>
+              <p><strong>Status:</strong> {selectedOrder.status}</p>
+              <p><strong>Order Date:</strong> {new Date(selectedOrder.orderDate).toLocaleDateString()}</p>
+              <p><strong>Total Amount:</strong> Rs{selectedOrder.totalAmount}</p>
+              <p><strong>Carbon Saved:</strong> {selectedOrder.carbonSaved} kg CO₂</p>
+            </div>
+            <div className="order-items">
+              <h3>Items</h3>
+              {selectedOrder.items.map((item, index) => (
+                <div key={index} className="order-item">
+                  <p><strong>{item.productName}</strong></p>
+                  <p>Shop: {item.shopName}</p>
+                  <p>Quantity: {item.quantity} × Rs{item.price}</p>
+                  <p>Carbon Footprint: {item.carbonFootprint} kg CO₂</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   const renderOrders = () => (
     <div className="orders-content">
       <h2>My Orders</h2>
-      <div className="orders-grid">
-        {orders.map(order => (
-          <div key={order.id} className="order-card">
-            <h3>{order.product}</h3>
-            <p className="order-price">Rs{order.price}</p>
-            <p className="order-status">{order.status}</p>
-            <p className="order-date">{order.date}</p>
-            <p className="order-carbon">Saved {order.carbonSaved} kg CO₂</p>
-          </div>
-        ))}
-      </div>
+      {orders.length === 0 ? (
+        <p className="no-orders">No orders found. Start shopping to see your orders here!</p>
+      ) : (
+        <div className="orders-grid">
+          {orders.map(order => (
+            <div key={order.id} className="order-card">
+              <div className="order-header">
+                <h3>Order #{order.id.substring(0, 8)}</h3>
+                <span className={`order-status ${order.status.toLowerCase()}`}>{order.status}</span>
+              </div>
+              <div className="order-info">
+                <p><strong>Items:</strong> {order.items.length}</p>
+                <p><strong>Total:</strong> Rs{order.totalAmount}</p>
+                <p><strong>Date:</strong> {new Date(order.orderDate).toLocaleDateString()}</p>
+                <p><strong>Carbon Saved:</strong> {order.carbonSaved} kg CO₂</p>
+              </div>
+              <div className="order-actions">
+                <button
+                  className="track-btn"
+                  onClick={() => handleTrackOrder(order)}
+                >
+                  Track Order
+                </button>
+                <button
+                  className="details-btn"
+                  onClick={() => handleViewOrderDetails(order)}
+                >
+                   View Details
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 
   const renderContent = () => {
     if (orderSuccess) return renderOrderSuccess();
     if (showPayment) return renderPayment();
-    
+
     switch (activeSection) {
       case 'dashboard': return renderDashboard();
       case 'products': return renderProducts();
@@ -378,29 +516,55 @@ const CustomerDashboard = () => {
     }
   };
 
+  // Fetch orders when orders section is active
+  useEffect(() => {
+    if (activeSection === 'orders') {
+      fetchOrders();
+    }
+  }, [activeSection]);
+
+  React.useEffect(() => {
+    // Fetch products from backend API
+    const fetchProductsFromAPI = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/products/all');
+        const data = await response.json();
+        if (response.ok) {
+          setProducts(data.products || []);
+        } else {
+          console.error('Failed to fetch products:', data.error);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    };
+
+    fetchProductsFromAPI();
+  }, []);
+
   return (
     <div className="customer-dashboard">
       <aside className="customer-sidebar">
         <div className="sidebar-header">
           <h2>🌿 EcoBazaar</h2>
-          <p>Customer Portal</p>
+
         </div>
         <nav className="sidebar-nav">
-          <div className={`nav-item ${activeSection === 'dashboard' ? 'active' : ''}`} 
+          <div className={`nav-item ${activeSection === 'dashboard' ? 'active' : ''}`}
                onClick={() => setActiveSection('dashboard')}>
-            📊 Dashboard
+              Dashboard
           </div>
-          <div className={`nav-item ${activeSection === 'products' ? 'active' : ''}`} 
+          <div className={`nav-item ${activeSection === 'products' ? 'active' : ''}`}
                onClick={() => setActiveSection('products')}>
-            🛍️ Products
+               Products
           </div>
-          <div className={`nav-item ${activeSection === 'cart' ? 'active' : ''}`} 
+          <div className={`nav-item ${activeSection === 'cart' ? 'active' : ''}`}
                onClick={() => setActiveSection('cart')}>
-            🛒 Cart ({cart.length})
+              Cart ({cart.length})
           </div>
-          <div className={`nav-item ${activeSection === 'orders' ? 'active' : ''}`} 
+          <div className={`nav-item ${activeSection === 'orders' ? 'active' : ''}`}
                onClick={() => setActiveSection('orders')}>
-            📦 Orders
+               Orders
           </div>
         </nav>
         <div className="sidebar-footer">
@@ -415,14 +579,16 @@ const CustomerDashboard = () => {
         <header className="main-header">
           <h1>Eco-Friendly Shopping</h1>
           <div className="header-actions">
-            <span className="cart-badge" onClick={() => setActiveSection('cart')}>
-              🛒 {cart.length}
-            </span>
+            {/* <span className="cart-badge" onClick={() => setActiveSection('cart')}>
+              {cart.length}
+            </span> */}
           </div>
         </header>
-        
+
         {renderContent()}
       </main>
+
+      {showOrderDetails && renderOrderDetails()}
     </div>
   );
 };

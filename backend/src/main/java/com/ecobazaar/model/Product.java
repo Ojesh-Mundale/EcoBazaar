@@ -21,7 +21,11 @@ public class Product {
     private List<String> ecoTags;
     private double carbonFootprint;
     private String sellerEmail;
+    private String shopName;  // Added shopName field
+    private String ecoRating; // Eco rating like A, B, C, A+
+    private double rating; // Average customer rating
     private int inventory;
+    private List<String> imageUrls; // URLs for product images
     private boolean isActive;
     
     // Default constructor
@@ -32,7 +36,7 @@ public class Product {
     // Constructor with parameters
     public Product(String name, String description, double price, String category, 
                   String materials, String manufacturing, String shippingMethod, 
-                  List<String> ecoTags, double carbonFootprint, String sellerEmail, int inventory) {
+                  List<String> ecoTags, double carbonFootprint, String sellerEmail, String shopName, int inventory) {
         this.name = name;
         this.description = description;
         this.price = price;
@@ -43,6 +47,7 @@ public class Product {
         this.ecoTags = ecoTags;
         this.carbonFootprint = carbonFootprint;
         this.sellerEmail = sellerEmail;
+        this.shopName = shopName;
         this.inventory = inventory;
         this.isActive = true;
     }
@@ -136,12 +141,44 @@ public class Product {
         this.sellerEmail = sellerEmail;
     }
     
+    public String getShopName() {
+        return shopName;
+    }
+
+    public void setShopName(String shopName) {
+        this.shopName = shopName;
+    }
+
+    public String getEcoRating() {
+        return ecoRating;
+    }
+
+    public void setEcoRating(String ecoRating) {
+        this.ecoRating = ecoRating;
+    }
+
+    public double getRating() {
+        return rating;
+    }
+
+    public void setRating(double rating) {
+        this.rating = rating;
+    }
+
     public int getInventory() {
         return inventory;
     }
     
     public void setInventory(int inventory) {
         this.inventory = inventory;
+    }
+    
+    public List<String> getImageUrls() {
+        return imageUrls;
+    }
+    
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls;
     }
     
     public boolean getIsActive() {

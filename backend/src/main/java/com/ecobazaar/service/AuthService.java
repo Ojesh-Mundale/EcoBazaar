@@ -1,5 +1,6 @@
 package com.ecobazaar.service;
 
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,19 +32,19 @@ public class AuthService {
     public ResponseEntity<?> login(User user) {
         try {
             Optional<User> existingUser = userRepository.findByEmail(user.getEmail());
-            
+
             if (existingUser.isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "User not found"));
             }
 
             User foundUser = existingUser.get();
-            
+
             if (!passwordEncoder.matches(user.getPassword(), foundUser.getPassword())) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid password"));
             }
 
             String token = generateToken(foundUser);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Login successful");
             response.put("token", token);
@@ -55,7 +56,7 @@ public class AuthService {
             ));
 
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Login failed: " + e.getMessage()));
         }
@@ -74,11 +75,14 @@ public class AuthService {
 
             // Hash password
             user.setPassword(passwordEncoder.encode(user.getPassword()));
-            
+
+            // Set user as verified by default
+            user.setIsVerified(true);
+
             User savedUser = userRepository.save(user);
-            
+
             String token = generateToken(savedUser);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Account created successfully");
             response.put("token", token);
@@ -90,7 +94,7 @@ public class AuthService {
             ));
 
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Registration failed: " + e.getMessage()));
         }
@@ -99,7 +103,7 @@ public class AuthService {
     public ResponseEntity<?> addAdminUser() {
         try {
             User adminUser = new User("admin@gmail.com", passwordEncoder.encode("admin"), "admin");
-            
+
             if (userRepository.existsByEmail(adminUser.getEmail())) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Admin user already exists"));
             }
@@ -112,12 +116,15 @@ public class AuthService {
     }
 
     private String generateToken(User user) {
+        // Decode the base64 encoded JWT secret
+        byte[] decodedKey = Base64.getDecoder().decode(jwtSecret);
+
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("role", user.getRole())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 24 hours
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .signWith(SignatureAlgorithm.HS512, decodedKey)
                 .compact();
     }
 }

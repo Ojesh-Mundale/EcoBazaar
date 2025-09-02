@@ -55,9 +55,10 @@ const AuthForm = () => {
 
         if (response.ok) {
           setSuccess('Login successful!');
-          // Store user data in localStorage
+          // Store token and user data in localStorage
+          localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
-          
+
           // Redirect based on role
           setTimeout(() => {
             if (data.user.role === 'admin') {
@@ -111,16 +112,19 @@ const AuthForm = () => {
 
         if (response.ok) {
           setSuccess('Account created successfully!');
-          
+          // Store token and user data in localStorage for auto-login
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+
           setTimeout(() => {
-            setIsLogin(true);
-            setFormData({
-              email: '',
-              password: '',
-              confirmPassword: '',
-              role: 'customer'
-            });
-            setSuccess('');
+            // Redirect based on role after successful registration
+            if (data.user.role === 'admin') {
+              navigate('/admin');
+            } else if (data.user.role === 'seller') {
+              navigate('/seller');
+            } else {
+              navigate('/customer');
+            }
           }, 2000);
         } else {
           setError(data.error || 'Registration failed');

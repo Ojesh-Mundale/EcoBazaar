@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -14,22 +16,30 @@ import com.ecobazaar.repository.ProductRepository;
 @Service
 public class ProductService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
+
     @Autowired
     private ProductRepository productRepository;
 
     public ResponseEntity<?> addProduct(Product product, String sellerEmail) {
         try {
+            logger.info("Adding product for seller: {}", sellerEmail);
+            logger.info("Product details: {}", product);
+
             // Set the seller email for the product
             product.setSellerEmail(sellerEmail);
             
             // Save the product to the database
             Product savedProduct = productRepository.save(product);
             
+            logger.info("Product saved successfully with id: {}", savedProduct.getId());
+
             return ResponseEntity.ok(Map.of(
                 "message", "Product added successfully",
                 "product", savedProduct
             ));
         } catch (Exception e) {
+            logger.error("Failed to add product", e);
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to add product: " + e.getMessage()));
         }
     }
@@ -75,9 +85,13 @@ public class ProductService {
                 productToUpdate.setMaterials(product.getMaterials());
                 productToUpdate.setManufacturing(product.getManufacturing());
                 productToUpdate.setShippingMethod(product.getShippingMethod());
+                productToUpdate.setShopName(product.getShopName());
                 productToUpdate.setEcoTags(product.getEcoTags());
                 productToUpdate.setCarbonFootprint(product.getCarbonFootprint());
                 productToUpdate.setInventory(product.getInventory());
+                if (product.getImageUrls() != null) {
+                    productToUpdate.setImageUrls(product.getImageUrls());
+                }
                 
                 Product updatedProduct = productRepository.save(productToUpdate);
                 
@@ -99,8 +113,8 @@ public class ProductService {
             
             if (product.isPresent()) {
                 Product productToDelete = product.get();
-                productToDelete.setIsActive(false);
-                productRepository.save(productToDelete);
+                // Instead of soft delete, perform hard delete from DB
+                productRepository.delete(productToDelete);
                 
                 return ResponseEntity.ok(Map.of("message", "Product deleted successfully"));
             } else {

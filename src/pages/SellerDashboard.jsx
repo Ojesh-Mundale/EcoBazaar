@@ -3,11 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import HamburgerMenu from '../components/HamburgerMenu';
 import './SellerDashboard.css';
 
+// Simple logger utility
+const logger = {
+  info: (message) => console.log(`[INFO] ${new Date().toISOString()}: ${message}`),
+  error: (message) => console.error(`[ERROR] ${new Date().toISOString()}: ${message}`)
+};
+
 const SellerDashboard = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState([]);
   const [activeOrderTab, setActiveOrderTab] = useState('new');
+  const [sellerOrders, setSellerOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Sidebar starts closed
   const navigate = useNavigate();
@@ -80,12 +88,21 @@ const SellerDashboard = () => {
     materials: '',
     manufacturing: '',
     shippingMethod: 'standard',
+    shopName: '',
     ecoTags: [],
-    images: []
+    images: [],
+    imageUrls: [],
+    imageUrlInput: '',
+    inventory: ''
   });
+
+  const [existingImageUrls, setExistingImageUrls] = useState([]);
 
   const [newEcoTag, setNewEcoTag] = useState('');
   const [backendProducts, setBackendProducts] = useState([]);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [viewingProduct, setViewingProduct] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   // Fetch products from backend
   const fetchProducts = async () => {
@@ -113,6 +130,38 @@ const SellerDashboard = () => {
   React.useEffect(() => {
     if (activeSection === 'products') {
       fetchProducts();
+    }
+  }, [activeSection]);
+
+  // Fetch orders from backend
+  const fetchOrders = async () => {
+    try {
+      setLoadingOrders(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/orders/seller-orders', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        setSellerOrders(result.orders || []);
+      } else {
+        console.error('Failed to fetch orders:', result.error);
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  // Fetch orders when Order section is active
+  React.useEffect(() => {
+    if (activeSection === 'Order') {
+      fetchOrders();
     }
   }, [activeSection]);
 
@@ -169,10 +218,41 @@ const SellerDashboard = () => {
     return Math.max(0.5, footprint).toFixed(1);
   };
 
+  // Convert file to base64
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  };
+
   const handleSubmitProduct = async (e) => {
     e.preventDefault();
+
+    // Validation
+    if (!productForm.name || !productForm.description || !productForm.price ||
+        !productForm.category || !productForm.materials || !productForm.shopName ||
+        !productForm.inventory) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
     try {
       const carbonFootprint = calculateCarbonFootprint();
+
+      // Convert images to base64
+      const imageUrls = [];
+      for (const file of productForm.images) {
+        try {
+          const base64 = await fileToBase64(file);
+          imageUrls.push(base64);
+        } catch (error) {
+          console.error('Error converting image to base64:', error);
+        }
+      }
+
       const productData = {
         name: productForm.name,
         description: productForm.description,
@@ -181,9 +261,12 @@ const SellerDashboard = () => {
         materials: productForm.materials,
         manufacturing: productForm.manufacturing,
         shippingMethod: productForm.shippingMethod,
+        shopName: productForm.shopName,
         ecoTags: productForm.ecoTags,
         carbonFootprint: parseFloat(carbonFootprint),
-        inventory: 100 // Default inventory
+        inventory: parseInt(productForm.inventory),
+        imageUrls: [...imageUrls, ...(productForm.imageUrls || [])]
+        // sellerEmail will be automatically added by the backend from the JWT token
       };
 
       const token = localStorage.getItem('token');
@@ -197,7 +280,7 @@ const SellerDashboard = () => {
       });
 
       const result = await response.json();
-      
+
       if (response.ok) {
         alert('Product submitted successfully! Carbon footprint: ' + carbonFootprint + ' kg CO₂');
         // Reset form
@@ -209,8 +292,12 @@ const SellerDashboard = () => {
           materials: '',
           manufacturing: '',
           shippingMethod: 'standard',
+          shopName: '',
           ecoTags: [],
-          images: []
+          images: [],
+          imageUrls: [],
+          imageUrlInput: '',
+          inventory: ''
         });
         // Refresh products list
         fetchProducts();
@@ -223,9 +310,29 @@ const SellerDashboard = () => {
     }
   };
 
-  const handleOrderAction = (orderId, action) => {
-    console.log(`Rs{action} order:`, orderId);
-    alert(`Order Rs{orderId} Rs{action} successfully!`);
+  const handleOrderAction = async (orderId, action) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: action })
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        alert(`Order ${orderId} ${action} successfully!`);
+        fetchOrders(); // Refresh orders list
+      } else {
+        alert('Failed to update order: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error updating order:', error);
+      alert('Failed to update order. Please try again.');
+    }
   };
 
   const handleReply = (reviewId) => {
@@ -239,6 +346,152 @@ const SellerDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem('user');
     navigate('/');
+  };
+
+  // Handle Edit Product
+  const handleEditProduct = (product) => {
+    logger.info(`Editing product: ${product.name}`);
+    setEditingProduct(product);
+    setExistingImageUrls(product.imageUrls || []);
+    setProductForm({
+      name: product.name || '',
+      description: product.description || '',
+      price: product.price || '',
+      category: product.category || '',
+      materials: product.materials || '',
+      manufacturing: product.manufacturing || '',
+      shippingMethod: product.shippingMethod || 'standard',
+      shopName: product.shopName || '',
+      ecoTags: product.ecoTags || [],
+      images: [], // Reset images for editing
+      imageUrls: product.imageUrls || [],
+      imageUrlInput: '',
+      inventory: product.inventory || ''
+    });
+    setActiveSection('add-product');
+  };
+
+  // Handle View Product
+  const handleViewProduct = (product) => {
+    logger.info(`Viewing product: ${product.name}`);
+    setViewingProduct(product);
+    setShowViewModal(true);
+  };
+
+  // Handle Delete Product
+  const handleDeleteProduct = async (productId) => {
+    if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+      logger.info(`Deleting product: ${productId}`);
+      try {
+        const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+        if (response.ok) {
+          alert('Product deleted successfully!');
+          fetchProducts(); // Refresh the products list
+        } else {
+          const result = await response.json();
+          alert('Failed to delete product: ' + (result.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        alert('Failed to delete product. Please try again.');
+      }
+    }
+  };
+
+  // Handle Update Product (for editing)
+  const handleUpdateProduct = async (e) => {
+    e.preventDefault();
+
+    if (!editingProduct) return;
+
+    // Validation
+    if (!productForm.name || !productForm.description || !productForm.price ||
+        !productForm.category || !productForm.materials || !productForm.shopName ||
+        !productForm.inventory) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    logger.info(`Updating product: ${productForm.name}`);
+    try {
+      const carbonFootprint = calculateCarbonFootprint();
+
+      // Convert images to base64 if new images are uploaded
+      const imageUrls = [];
+      for (const file of productForm.images) {
+        try {
+          const base64 = await fileToBase64(file);
+          imageUrls.push(base64);
+        } catch (error) {
+          console.error('Error converting image to base64:', error);
+        }
+      }
+
+      const productData = {
+        name: productForm.name,
+        description: productForm.description,
+        price: parseFloat(productForm.price),
+        category: productForm.category,
+        materials: productForm.materials,
+        manufacturing: productForm.manufacturing,
+        shippingMethod: productForm.shippingMethod,
+        shopName: productForm.shopName,
+        ecoTags: productForm.ecoTags,
+        carbonFootprint: parseFloat(carbonFootprint),
+        inventory: parseInt(productForm.inventory),
+        imageUrls: [...(editingProduct.imageUrls || []), ...imageUrls]
+      };
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/products/${editingProduct.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(productData)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        logger.info(`Product updated successfully: ${productData.name}`);
+        alert('Product updated successfully! Carbon footprint: ' + carbonFootprint + ' kg CO₂');
+        // Reset form and state
+        setProductForm({
+          name: '',
+          description: '',
+          price: '',
+          category: '',
+          materials: '',
+          manufacturing: '',
+          shippingMethod: 'standard',
+          shopName: '',
+          ecoTags: [],
+          images: [],
+          imageUrls: [],
+          imageUrlInput: '',
+          inventory: ''
+        });
+        setEditingProduct(null);
+        setActiveSection('products');
+        fetchProducts(); // Refresh products list
+      } else {
+        logger.error(`Failed to update product: ${result.error}`);
+        alert('Failed to update product: ' + result.error);
+      }
+    } catch (error) {
+      logger.error(`Error updating product: ${error.message}`);
+      console.error('Error updating product:', error);
+      alert('Failed to update product. Please try again.');
+    }
   };
 
   const renderDashboard = () => (
@@ -297,14 +550,14 @@ const SellerDashboard = () => {
             <span className="activity-icon">O</span>
             <div className="activity-details">
               <p>New order: Organic Cotton T-Shirt</p>
-              <span className="activity-time">2 houRs ago</span>
+              <span className="activity-time">2 hours ago</span>
             </div>
           </div>
           <div className="activity-item">
             <span className="activity-icon">R</span>
             <div className="activity-details">
               <p>New 5-star review received</p>
-              <span className="activity-time">4 houRs ago</span>
+              <span className="activity-time">4 hours ago</span>
             </div>
           </div>
           <div className="activity-item">
@@ -376,6 +629,27 @@ const SellerDashboard = () => {
                 <option value="office">Office Supplies</option>
                 <option value="accessories">Accessories</option>
               </select>
+            </div>
+            <div className="form-group">
+              <label>Shop Name *</label>
+              <input
+                type="text"
+                value={productForm.shopName}
+                onChange={(e) => handleInputChange('shopName', e.target.value)}
+                placeholder="Enter your shop name"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Inventory *</label>
+              <input
+                type="number"
+                value={productForm.inventory}
+                onChange={(e) => handleInputChange('inventory', e.target.value)}
+                placeholder="Enter initial inventory"
+                min="0"
+                required
+              />
             </div>
           </div>
           <div className="form-column">
@@ -455,12 +729,57 @@ const SellerDashboard = () => {
                 <div className="image-preview">
                   {productForm.images.map((image, index) => (
                     <div key={index} className="image-preview-item">
-                      <img src={URL.createObjectURL(image)} alt={`Preview Rs{index}`} />
+                      <img src={URL.createObjectURL(image)} alt={`Preview ${index}`} />
                       <button type="button" onClick={() => handleRemoveImage(index)}>×</button>
                     </div>
                   ))}
                 </div>
               )}
+              <div className="form-group">
+                <label>Add Image URL</label>
+                <input
+                  type="text"
+                  placeholder="Enter image URL "
+                  value={productForm.imageUrlInput || ''}
+                  onChange={(e) => handleInputChange('imageUrlInput', e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => {
+                    if (productForm.imageUrlInput && productForm.imageUrlInput.trim() && !productForm.imageUrls.includes(productForm.imageUrlInput.trim())) {
+                      setProductForm(prev => ({
+                        ...prev,
+                        imageUrls: [...(prev.imageUrls || []), prev.imageUrlInput.trim()],
+                        imageUrlInput: ''
+                      }));
+                    }
+                  }}
+                >
+                  Add Image URL
+                </button>
+                {productForm.imageUrls && productForm.imageUrls.length > 0 && (
+                  <div className="image-url-preview">
+                    <h5>Added Image URLs:</h5>
+                    {productForm.imageUrls.map((url, index) => (
+                      <div key={index} className="image-url-item">
+                        <span>{url}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProductForm(prev => ({
+                              ...prev,
+                              imageUrls: prev.imageUrls.filter((_, i) => i !== index)
+                            }));
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="carbon-preview">
               <h4>Estimated Carbon Footprint</h4>
@@ -505,53 +824,89 @@ const SellerDashboard = () => {
       </div>
 
       <div className="products-grid">
-        {products.map(product => (
-          <div key={product.id} className={`product-card Rs{product.status === 'Warning' ? 'warning' : ''}`}>
-            <div className="product-header">
-              <input
-                type="checkbox"
-                checked={selectedProducts.includes(product.id)}
-                onChange={() => handleSelectItem('products', product.id)}
-              />
-              <span className={`status-badge Rs{product.status.toLowerCase()}`}>
-                {product.status}
-              </span>
-            </div>
-            <div className="product-info">
-              <h3>{product.name}</h3>
-              <p className="product-price">Rs{product.price}</p>
-              <p className="product-category">{product.category}</p>
-              <div className="product-metrics">
-                <div className="metric">
-                  <span className="metric-label">Carbon Footprint:</span>
-                  <span className="metric-value">{product.carbonFootprint} kg CO₂</span>
-                </div>
-                <div className="metric">
-                  <span className="metric-label">Eco Rating:</span>
-                  <span className={`eco-rating Rs{product.ecoRating.toLowerCase()}`}>{product.ecoRating}</span>
-                </div>
-                <div className="metric">
-                  <span className="metric-label">Inventory:</span>
-                  <span className="metric-value">{product.inventory}</span>
-                </div>
-                <div className="metric">
-                  <span className="metric-label">Sales:</span>
-                  <span className="metric-value">{product.sales}</span>
-                </div>
+        {backendProducts.length > 0 ? (
+          backendProducts.map(product => (
+            <div key={product.id} className={`product-card ${product.status === 'Warning' ? 'warning' : ''}`}>
+              <div className="product-header">
+                <input
+                  type="checkbox"
+                  checked={selectedProducts.includes(product.id)}
+                  onChange={() => handleSelectItem('products', product.id)}
+                />
+                <span className={`status-badge ${product.status ? product.status.toLowerCase() : 'active'}`}>
+                  {product.status || 'Active'}
+                </span>
               </div>
-              {product.warning && (
-                <div className="warning-message">
-                  ! {product.warning}
+
+              {/* Product Images */}
+              {product.imageUrls && product.imageUrls.length > 0 && (
+                <div className="product-images">
+                  <div className="product-image-grid">
+                    {product.imageUrls.slice(0, 3).map((imageUrl, index) => (
+                      <img
+                        key={index}
+                        src={imageUrl}
+                        alt={`${product.name} ${index + 1}`}
+                        className="product-image"
+                        onError={(e) => {
+                          e.target.src = '/placeholder-image.png'; // Fallback image
+                        }}
+                      />
+                    ))}
+                    {product.imageUrls.length > 3 && (
+                      <div className="more-images">
+                        +{product.imageUrls.length - 3} more
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
+
+              <div className="product-info">
+                <h3>{product.name}</h3>
+                <p className="product-price">Rs{product.price}</p>
+                <p className="product-category">{product.category}</p>
+                <div className="product-metrics">
+                  <div className="metric">
+                    <span className="metric-label">Carbon Footprint:</span>
+                    <span className="metric-value">{product.carbonFootprint} kg CO₂</span>
+                  </div>
+                  <div className="metric">
+                    <span className="metric-label">Eco Rating:</span>
+                    <span className={`eco-rating ${product.ecoRating ? product.ecoRating.toLowerCase() : 'a'}`}>
+                      {product.ecoRating || 'A'}
+                    </span>
+                  </div>
+                  <div className="metric">
+                    <span className="metric-label">Inventory:</span>
+                    <span className="metric-value">{product.inventory || 0}</span>
+                  </div>
+                  <div className="metric">
+                    <span className="metric-label">Sales:</span>
+                    <span className="metric-value">{product.sales || 0}</span>
+                  </div>
+                </div>
+                {product.warning && (
+                  <div className="warning-message">
+                    ! {product.warning}
+                  </div>
+                )}
+              </div>
+              <div className="product-actions">
+                <button className="btn-secondary" onClick={() => handleEditProduct(product)}>Edit</button>
+                <button className="btn-secondary" onClick={() => handleViewProduct(product)}>View</button>
+                <button className="btn-danger" onClick={() => handleDeleteProduct(product.id)}>Delete</button>
+              </div>
             </div>
-            <div className="product-actions">
-              <button className="btn-secondary">Edit</button>
-              <button className="btn-secondary">View</button>
-              <button className="btn-danger">Delete</button>
-            </div>
+          ))
+        ) : (
+          <div className="no-products">
+            <p>No products found. Add your first product to get started!</p>
+            <button className="btn-primary" onClick={() => setActiveSection('add-product')}>
+              Add Your First Product
+            </button>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
@@ -564,7 +919,7 @@ const SellerDashboard = () => {
           {['new', 'processing', 'shipped', 'delivered', 'returned'].map(tab => (
             <button
               key={tab}
-              className={`tab-btn Rs{activeOrderTab === tab ? 'active' : ''}`}
+              className={`tab-btn ${activeOrderTab === tab ? 'active' : ''}`}
               onClick={() => setActiveOrderTab(tab)}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -573,49 +928,74 @@ const SellerDashboard = () => {
         </div>
       </div>
 
-      <div className="Order-grid">
-        {Order.filter(order => activeOrderTab === 'new' || order.status.toLowerCase() === activeOrderTab).map(order => (
-          <div key={order.id} className="order-card">
-            <div className="order-header">
-              <input
-                type="checkbox"
-                checked={selectedOrder.includes(order.id)}
-                onChange={() => handleSelectItem('Order', order.id)}
-              />
-              <span className={`status-badge Rs{order.status.toLowerCase()}`}>
-                {order.status}
-              </span>
-              <span className="order-date">{order.date}</span>
+      {loadingOrders ? (
+        <div className="loading">Loading orders...</div>
+      ) : (
+        <div className="Order-grid">
+          {sellerOrders.length > 0 ? (
+            sellerOrders.filter(order => activeOrderTab === 'new' || order.status.toLowerCase() === activeOrderTab).map(order => (
+              <div key={order.id} className="order-card">
+                <div className="order-header">
+                  <input
+                    type="checkbox"
+                    checked={selectedOrder.includes(order.id)}
+                    onChange={() => handleSelectItem('Order', order.id)}
+                  />
+                  <span className={`status-badge ${order.status.toLowerCase()}`}>
+                    {order.status}
+                  </span>
+                  <span className="order-date">{new Date(order.orderDate).toLocaleDateString()}</span>
+                </div>
+                <div className="order-info">
+                  <h3>Order #{order.id}</h3>
+                  <p><strong>Customer:</strong> {order.customerEmail || 'N/A'}</p>
+                  <p><strong>Items:</strong> {order.items ? order.items.map(item => `${item.productName || 'Product'} (x${item.quantity})`).join(', ') : 'N/A'}</p>
+                  <p><strong>Total Amount:</strong> Rs{order.totalAmount || 0}</p>
+                  <p><strong>Status:</strong> {order.status || 'PENDING'}</p>
+                  <p><strong>Shipping:</strong> <button className="btn-link" onClick={() => alert(`Shipping Address: ${order.shippingAddress || 'Standard'}`)}>View Details</button></p>
+                </div>
+                <div className="order-actions">
+                  {order.status?.toLowerCase() === 'pending' && (
+                    <>
+                      <button className="btn-primary" onClick={() => handleOrderAction(order.id, 'confirmed')}>
+                        Accept
+                      </button>
+                      <button className="btn-danger" onClick={() => handleOrderAction(order.id, 'cancelled')}>
+                        Reject
+                      </button>
+                    </>
+                  )}
+                  {order.status?.toLowerCase() === 'confirmed' && (
+                    <>
+                      <button className="btn-primary" onClick={() => handleOrderAction(order.id, 'shipped')}>
+                        Mark as Shipped
+                      </button>
+                      <button className="btn-primary" onClick={() => handleOrderAction(order.id, 'delivered')}>
+                        Mark as Delivered
+                      </button>
+                    </>
+                  )}
+                  {order.status?.toLowerCase() === 'shipped' && (
+                    <button className="btn-primary" onClick={() => handleOrderAction(order.id, 'delivered')}>
+                      Mark as Delivered
+                    </button>
+                  )}
+                  {order.status?.toLowerCase() === 'delivered' && (
+                    <span className="status-completed">Order Completed</span>
+                  )}
+                  {order.status?.toLowerCase() === 'cancelled' && (
+                    <span className="status-cancelled">Order Cancelled</span>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="no-orders">
+              <p>No orders found.</p>
             </div>
-            <div className="order-info">
-              <h3>Order #{order.id}</h3>
-              <p><strong>Customer:</strong> {order.customer}</p>
-              <p><strong>Product:</strong> {order.product}</p>
-              <p><strong>Quantity:</strong> {order.quantity}</p>
-              <p><strong>Price:</strong> Rs{order.price}</p>
-              <p><strong>Shipping:</strong> {order.shipping}</p>
-            </div>
-            <div className="order-actions">
-              {order.status === 'Pending' && (
-                <>
-                  <button className="btn-primary" onClick={() => handleOrderAction(order.id, 'accept')}>
-                    Accept
-                  </button>
-                  <button className="btn-danger" onClick={() => handleOrderAction(order.id, 'reject')}>
-                    Reject
-                  </button>
-                </>
-              )}
-              {order.status === 'Processing' && (
-                <button className="btn-primary" onClick={() => handleOrderAction(order.id, 'ship')}>
-                  Mark as Shipped
-                </button>
-              )}
-              <button className="btn-secondary">View Details</button>
-            </div>
-          </div>
-        ))}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
@@ -748,10 +1128,10 @@ const SellerDashboard = () => {
                 <span className="transaction-date">{transaction.date}</span>
               </div>
               <div className="transaction-amount">
-                <span className={`amount Rs{transaction.type === 'Refund' ? 'negative' : 'positive'}`}>
+                <span className={`amount ${transaction.type === 'Refund' ? 'negative' : 'positive'}`}>
                   {transaction.type === 'Refund' ? '-' : '+'}Rs{Math.abs(transaction.amount).toFixed(2)}
                 </span>
-                <span className={`status Rs{transaction.status.toLowerCase()}`}>
+                <span className={`status ${transaction.status.toLowerCase()}`}>
                   {transaction.status}
                 </span>
               </div>
@@ -856,7 +1236,7 @@ const SellerDashboard = () => {
           {sellersidebarItems.map(item => (
             <div
               key={item.id}
-              className={`nav-item Rs{activeSection === item.id ? 'active' : ''}`}
+              className={`nav-item ${activeSection === item.id ? 'active' : ''}`}
               onClick={() => setActiveSection(item.id)}
             >
               <span className="nav-icon">{item.icon}</span>
