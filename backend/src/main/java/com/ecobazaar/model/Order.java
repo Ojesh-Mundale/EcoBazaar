@@ -3,16 +3,24 @@ package com.ecobazaar.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import javax.persistence.ElementCollection;
+import javax.persistence.Embeddable;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
-@Document(collection = "orders")
+@Entity
+@Table(name = "orders")
 public class Order {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private String customerEmail;
+    @ElementCollection
     private List<OrderItem> items;
     private double totalAmount;
     private String status; // PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
@@ -51,11 +59,11 @@ public class Order {
     }
 
     // Getters and Setters
-    public String getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -141,21 +149,26 @@ public class Order {
     }
 
     // Inner class for order items
+    @Embeddable
     public static class OrderItem {
         private String productId;
         private String productName;
         private String shopName;
+        private String sellerEmail;
+        private String category;
         private int quantity;
         private double price;
         private double carbonFootprint;
 
         public OrderItem() {}
 
-        public OrderItem(String productId, String productName, String shopName,
+        public OrderItem(String productId, String productName, String shopName, String sellerEmail, String category,
                         int quantity, double price, double carbonFootprint) {
             this.productId = productId;
             this.productName = productName;
             this.shopName = shopName;
+            this.sellerEmail = sellerEmail;
+            this.category = category;
             this.quantity = quantity;
             this.price = price;
             this.carbonFootprint = carbonFootprint;
@@ -208,6 +221,22 @@ public class Order {
 
         public void setCarbonFootprint(double carbonFootprint) {
             this.carbonFootprint = carbonFootprint;
+        }
+
+        public String getSellerEmail() {
+            return sellerEmail;
+        }
+
+        public void setSellerEmail(String sellerEmail) {
+            this.sellerEmail = sellerEmail;
+        }
+
+        public String getCategory() {
+            return category;
+        }
+
+        public void setCategory(String category) {
+            this.category = category;
         }
     }
 }

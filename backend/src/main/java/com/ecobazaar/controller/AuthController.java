@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ecobazaar.model.User;
+import com.ecobazaar.repository.SellerRepository;
 import com.ecobazaar.repository.UserRepository;
 import com.ecobazaar.service.AuthService;
 
@@ -26,6 +27,9 @@ public class AuthController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private SellerRepository sellerRepository;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody User user) {
         return authService.login(user);
@@ -37,20 +41,17 @@ public class AuthController {
     }
 
     @PutMapping("/verify/{id}")
-    public ResponseEntity<?> verifySeller(@PathVariable String id) {
-        Optional<User> userOptional = userRepository.findById(id);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setIsVerified(true);
-            userRepository.save(user);
+    public ResponseEntity<?> verifySeller(@PathVariable Long id) {
+        Optional<com.ecobazaar.model.Seller> sellerOptional = sellerRepository.findById(id);
+        if (sellerOptional.isPresent()) {
+            com.ecobazaar.model.Seller seller = sellerOptional.get();
+            seller.setIsVerified(true);
+            sellerRepository.save(seller);
             return ResponseEntity.ok(Map.of("message", "Seller verified successfully"));
         } else {
             return ResponseEntity.badRequest().body(Map.of("error", "Seller not found"));
         }
     }
 
-    @PostMapping("/add-admin")
-    public ResponseEntity<?> addAdminUser() {
-        return authService.addAdminUser();
-    }
+
 }

@@ -9,49 +9,53 @@ body {
   padding: 20px;
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  background: linear-gradient(135deg, #2d5a27 0%, #4a7c59 50%, #66bb6a 100%);
+  background-image: url('https://img.freepik.com/free-vector/background-international-environment-celebration_23-2150472123.jpg?semt=ais_hybrid&w=740&q=80');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  animation: backgroundPan 20s ease-in-out infinite;
+}
+
+@keyframes backgroundPan {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .auth-container {
   max-width: 350px;
   width: auto;
-  margin: 0 auto;
-  padding: 10px; /* Reduced padding */
-  background: white;
-  border-radius: 20px 20px 30px 30px; /* More curvy edges from bottom */
+  margin: 50px auto 0 auto;
+  /* padding: 10px; */
+  background: rgba(56, 215, 24, 0.85);
+  border-radius: 20px 20px 30px 30px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
+  animation: slideInFromLeft 1s ease forwards;
+  padding-top: 10px;
 }
 
-.auth-header {
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-.auth-header h2 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  color: #2d5a27;
-}
-
-.form-group {
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #2d5a27;
-  text-align: left;
+@keyframes slideInFromLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .form-group input,
@@ -63,11 +67,13 @@ body {
   font-size: 14px;
   background: white;
   color: #2d5a27;
+  transition: border-color 0.3s ease, color 0.3s ease;
 }
 
 .form-group input:focus,
 .form-group select:focus {
-  border-color: #2d5a27;
+  border-color: #2d7a27;
+  color: #2d7a27;
   outline: none;
 }
 
@@ -82,30 +88,48 @@ body {
   font-weight: 600;
   cursor: pointer;
   margin-top: 10px;
+  transition: background 0.3s ease;
 }
 
 .auth-button:hover {
   background: #45a049;
+  box-shadow: 0 0 10px #4CAF50;
 }
 
-.toggle-link {
-  text-align: center;
-  margin-top: 15px;
+.auth-header h2 {
+  color: #2d7a27;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+  animation: textSlideIn 1s ease forwards;
+}
+
+@keyframes textSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.form-group label {
+  color: #2d7a27;
+  font-weight: 700;
 }
 
 .toggle-link button {
-  background: none;
-  border: none;
-  color: #4a7c59;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
+  color: #2d7a27;
+  font-weight: 700;
   text-decoration: underline;
 }
 
 .toggle-link button:hover {
-  color: #2d5a27;
+  color: #1f4d14;
+  text-shadow: 0 0 5px #1f4d14;
 }
+
+
 
 .error-message,
 .success-message {

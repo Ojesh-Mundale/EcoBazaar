@@ -7,8 +7,8 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "customers")
+public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,18 +16,14 @@ public class User {
 
     private String email;
     private String password;
-    private String role;
-    private Boolean isVerified = false;
 
     // Default constructor
-    public User() {}
+    public Customer() {}
 
     // Constructor with parameters
-    public User(String email, String password, String role) {
+    public Customer(String email, String password) {
         this.email = email;
         this.password = password;
-        this.role = role;
-        this.isVerified = false;
     }
 
     // Getters and Setters
@@ -53,21 +49,5 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public Boolean getIsVerified() {
-        return isVerified;
-    }
-
-    public void setIsVerified(Boolean isVerified) {
-        this.isVerified = isVerified;
     }
 }

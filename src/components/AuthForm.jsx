@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import './AuthForm.css';
 
 const AuthForm = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode');
+  const [isLogin, setIsLogin] = useState(mode === 'signup' ? false : true);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -116,12 +118,36 @@ const AuthForm = () => {
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
 
-          setTimeout(() => {
+          setTimeout(async () => {
             // Redirect based on role after successful registration
             if (data.user.role === 'admin') {
               navigate('/admin');
             } else if (data.user.role === 'seller') {
-              navigate('/seller');
+              // Check if seller profile is complete
+              try {
+                const profileResponse = await fetch('http://localhost:5000/api/sellers/profile-status', {
+                  method: 'GET',
+                  headers: {
+                    'Authorization': `Bearer ${data.token}`
+                  }
+                });
+
+                if (profileResponse.ok) {
+                  const profileData = await profileResponse.json();
+                  if (profileData.profileComplete) {
+                    navigate('/seller');
+                  } else {
+                    navigate('/seller/complete-profile');
+                  }
+                } else {
+                  // If profile status check fails, assume incomplete and redirect to completion
+                  navigate('/seller/complete-profile');
+                }
+              } catch (error) {
+                console.error('Error checking profile status:', error);
+                // If error occurs, assume incomplete and redirect to completion
+                navigate('/seller/complete-profile');
+              }
             } else {
               navigate('/customer');
             }
@@ -150,11 +176,10 @@ const AuthForm = () => {
 
   return (
     <div className="auth-container">
-      <div className="leaf-decoration leaf-1">🌿</div>
-      <div className="leaf-decoration leaf-2">🌱</div>
+      
       
       <div className="auth-header">
-        <h2>EcoBazaar</h2>
+        <h2>EcoBazaarX</h2>
       </div>
       
       {error && <div className="error-message">{error}</div>}
@@ -187,19 +212,21 @@ const AuthForm = () => {
           />
         </div>
         
-        <div className="form-group">
-          <label htmlFor="role">Role</label>
-          <select
-            id="role"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            required
-          >
-            <option value="customer">Customer</option>
-            <option value="seller">Seller</option>
-          </select>
-        </div>
+        {!isLogin && (
+          <div className="form-group">
+            <label htmlFor="role">Role</label>
+            <select
+              id="role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              required={!isLogin}
+            >
+              <option value="customer">Customer</option>
+              <option value="seller">Seller</option>
+            </select>
+          </div>
+        )}
         
         {!isLogin && (
           <>
@@ -219,7 +246,7 @@ const AuthForm = () => {
         )}
         
         <button type="submit" className="auth-button">
-          {isLogin ? 'Login to EcoBazaar' : 'Join EcoBazaar'}
+          {isLogin ? 'Login to EcoBazaarX' : 'Join EcoBazaarX'}
         </button>
       </form>
       

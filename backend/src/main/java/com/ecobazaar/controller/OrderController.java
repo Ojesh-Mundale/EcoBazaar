@@ -35,14 +35,60 @@ public class OrderController {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
+    private String extractEmailFromAuthHeader(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                String token = authHeader.substring(7); // Remove "Bearer " prefix
+
+                // Decode the base64 encoded JWT secret
+                byte[] decodedKey = Base64.getDecoder().decode(jwtSecret);
+
+                // Parse and validate the JWT token using HS512 algorithm
+                Claims claims = Jwts.parser()
+                        .setSigningKey(decodedKey)
+                        .parseClaimsJws(token)
+                        .getBody();
+
+                // Extract email from the token claims
+                return claims.getSubject();
+            } catch (Exception e) {
+                throw new RuntimeException("Invalid JWT token: " + e.getMessage());
+            }
+        }
+        throw new RuntimeException("Missing or invalid Authorization header");
+    }
+
+    private String extractRoleFromAuthHeader(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                String token = authHeader.substring(7); // Remove "Bearer " prefix
+
+                // Decode the base64 encoded JWT secret
+                byte[] decodedKey = Base64.getDecoder().decode(jwtSecret);
+
+                // Parse and validate the JWT token using HS512 algorithm
+                Claims claims = Jwts.parser()
+                        .setSigningKey(decodedKey)
+                        .parseClaimsJws(token)
+                        .getBody();
+
+                // Extract role from the token claims
+                return claims.get("role", String.class);
+            } catch (Exception e) {
+                throw new RuntimeException("Invalid JWT token: " + e.getMessage());
+            }
+        }
+        throw new RuntimeException("Missing or invalid Authorization header");
+    }
+
     @PostMapping("/create")
     public ResponseEntity<?> createOrder(@RequestBody Order order, @RequestHeader("Authorization") String authHeader) {
         try {
             String customerEmail = extractEmailFromAuthHeader(authHeader);
-            logger.info("Creating order for customer: {}", customerEmail);
+            // logger.info("Creating order for customer: {}", customerEmail);
             return orderService.createOrder(order, customerEmail);
         } catch (Exception e) {
-            logger.error("Failed to create order due to token issue", e);
+            // logger.error("Failed to create order due to token issue", e);
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden: Invalid or expired token"));
         }
     }
@@ -123,51 +169,63 @@ public class OrderController {
         }
     }
 
-    // Proper method to extract email from JWT token in Authorization header
-    private String extractEmailFromAuthHeader(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            try {
-                String token = authHeader.substring(7); // Remove "Bearer " prefix
-
-                // Decode the base64 encoded JWT secret
-                byte[] decodedKey = Base64.getDecoder().decode(jwtSecret);
-
-                // Parse and validate the JWT token using HS512 algorithm
-                Claims claims = Jwts.parser()
-                        .setSigningKey(decodedKey)
-                        .parseClaimsJws(token)
-                        .getBody();
-
-                // Extract email from the token claims
-                return claims.getSubject();
-            } catch (Exception e) {
-                throw new RuntimeException("Invalid JWT token: " + e.getMessage());
-            }
+    @GetMapping("/seller-transactions")
+    public ResponseEntity<?> getSellerTransactions(@RequestHeader("Authorization") String authHeader) {
+        try {
+            String sellerEmail = extractEmailFromAuthHeader(authHeader);
+            return orderService.getSellerTransactions(sellerEmail);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(Map.of("error", "Forbidden: Invalid or expired token"));
         }
-        throw new RuntimeException("Missing or invalid Authorization header");
     }
 
-    // Method to extract role from JWT token in Authorization header
-    private String extractRoleFromAuthHeader(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            try {
-                String token = authHeader.substring(7); // Remove "Bearer " prefix
-
-                // Decode the base64 encoded JWT secret
-                byte[] decodedKey = Base64.getDecoder().decode(jwtSecret);
-
-                // Parse and validate the JWT token using HS512 algorithm
-                Claims claims = Jwts.parser()
-                        .setSigningKey(decodedKey)
-                        .parseClaimsJws(token)
-                        .getBody();
-
-                // Extract role from the token claims
-                return claims.get("role", String.class);
-            } catch (Exception e) {
-                throw new RuntimeException("Invalid JWT token: " + e.getMessage());
-            }
+    @GetMapping("/customer-stats")
+    public ResponseEntity<?> getCustomerStats(@RequestHeader("Authorization") String authHeader) {
+        try {
+            String customerEmail = extractEmailFromAuthHeader(authHeader);
+            return orderService.getCustomerStats(customerEmail);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(Map.of("error", "Forbidden: Invalid or expired token"));
         }
-        throw new RuntimeException("Missing or invalid Authorization header");
+    }
+
+    @GetMapping("/carbon-impact-category")
+    public ResponseEntity<?> getCarbonImpactByCategory(@RequestHeader("Authorization") String authHeader) {
+        try {
+            String customerEmail = extractEmailFromAuthHeader(authHeader);
+            return orderService.getCarbonImpactByCategory(customerEmail);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(Map.of("error", "Forbidden: Invalid or expired token"));
+        }
+    }
+
+    @GetMapping("/my-orders/category/{category}")
+    public ResponseEntity<?> getMyOrdersByCategory(@PathVariable String category, @RequestHeader("Authorization") String authHeader) {
+        try {
+            String customerEmail = extractEmailFromAuthHeader(authHeader);
+            return orderService.getCustomerOrdersByCategory(customerEmail, category);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(Map.of("error", "Forbidden: Invalid or expired token"));
+        }
+    }
+
+    @PostMapping("/submit-feedback")
+    public ResponseEntity<?> submitFeedback(@RequestBody Map<String, Object> feedbackData, @RequestHeader("Authorization") String authHeader) {
+        try {
+            String customerEmail = extractEmailFromAuthHeader(authHeader);
+            return orderService.submitFeedback(feedbackData, customerEmail);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(Map.of("error", "Forbidden: Invalid or expired token"));
+        }
+    }
+
+    @GetMapping("/seller-feedback")
+    public ResponseEntity<?> getSellerFeedback(@RequestHeader("Authorization") String authHeader) {
+        try {
+            String sellerEmail = extractEmailFromAuthHeader(authHeader);
+            return orderService.getSellerFeedback(sellerEmail);
+        } catch (Exception e) {
+            return ResponseEntity.status(403).body(Map.of("error", "Forbidden: Invalid or expired token"));
+        }
     }
 }

@@ -2,14 +2,20 @@ package com.ecobazaar.model;
 
 import java.util.List;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
-@Document(collection = "products")
+@Entity
+@Table(name = "products")
 public class Product {
-    
+
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     
     private String name;
     private String description;
@@ -18,6 +24,7 @@ public class Product {
     private String materials;
     private String manufacturing;
     private String shippingMethod;
+    @ElementCollection
     private List<String> ecoTags;
     private double carbonFootprint;
     private String sellerEmail;
@@ -25,6 +32,7 @@ public class Product {
     private String ecoRating; // Eco rating like A, B, C, A+
     private double rating; // Average customer rating
     private int inventory;
+    @ElementCollection
     private List<String> imageUrls; // URLs for product images
     private boolean isActive;
     
@@ -53,11 +61,11 @@ public class Product {
     }
     
     // Getters and Setters
-    public String getId() {
+    public Long getId() {
         return id;
     }
-    
-    public void setId(String id) {
+
+    public void setId(Long id) {
         this.id = id;
     }
     

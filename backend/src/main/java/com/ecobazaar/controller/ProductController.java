@@ -40,10 +40,10 @@ public class ProductController {
     public ResponseEntity<?> addProduct(@RequestBody Product product, @RequestHeader("Authorization") String authHeader) {
         try {
             String sellerEmail = extractEmailFromAuthHeader(authHeader);
-            logger.info("Extracted seller email from token: {}", sellerEmail);
+            // logger.info("Extracted seller email from token: {}", sellerEmail);
             return productService.addProduct(product, sellerEmail);
         } catch (Exception e) {
-            logger.error("Failed to add product due to token issue", e);
+            // logger.error("Failed to add product due to token issue", e);
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden: Invalid or expired token"));
         }
     }
@@ -91,6 +91,16 @@ public class ProductController {
     @GetMapping("/all")
     public ResponseEntity<?> getAllProducts() {
         return productService.getAllProducts();
+    }
+
+    @GetMapping("/{id}/image/{index}")
+    public ResponseEntity<byte[]> getProductImage(@PathVariable String id, @PathVariable int index) {
+        try {
+            Long productId = Long.parseLong(id);
+            return productService.getProductImage(productId, index);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     // Proper method to extract email from JWT token in Authorization header

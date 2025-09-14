@@ -807,12 +807,386 @@
   .analytics-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .report-table-section {
     overflow-x: auto;
   }
-  
+
   .data-table {
     min-width: 600px;
   }
 }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6c757d;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  color: #d32f2f;
+}
+
+.modal-content h3 {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 600;
+  padding-right: 40px; /* Space for close button */
+}
+
+.modal-body {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.modal-image-section {
+  flex: 0 0 200px;
+}
+
+.modal-image-section img {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.modal-details-section {
+  flex: 1;
+}
+
+.modal-details-section h3 {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.modal-details-section p {
+  margin: 0 0 12px 0;
+  color: #495057;
+  line-height: 1.5;
+}
+
+.modal-details-section p strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Seller Details Modal Styles */
+.seller-details-modal {
+  max-width: 375px;
+  width: 95%;
+  max-height: 90vh;
+}
+
+.modal-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.seller-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.details-section {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.details-section h3 {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+  font-size: 18px;
+  font-weight: 600;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 8px;
+}
+
+.details-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.details-row:last-child {
+  border-bottom: none;
+}
+
+.label {
+  font-weight: 600;
+  color: #495057;
+  flex: 0 0 140px;
+}
+
+.value {
+  color: #6c757d;
+  flex: 1;
+  text-align: right;
+  word-break: break-word;
+}
+
+/* Orders and Sellers Section */
+.orders-sellers-section {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 24px;
+}
+
+.orders-sellers-section h3 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.orders-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.orders-table-container .data-table {
+  margin: 0;
+}
+
+.orders-table-container .data-table th {
+  position: sticky;
+  top: 0;
+  background: #f8f9fa;
+  z-index: 10;
+}
+
+.orders-table-container .data-table th,
+.orders-table-container .data-table td {
+  padding: 12px 16px;
+  white-space: nowrap;
+}
+
+.orders-table-container .data-table th:nth-child(1),
+.orders-table-container .data-table td:nth-child(1) {
+  min-width: 180px;
+}
+
+.orders-table-container .data-table th:nth-child(2),
+.orders-table-container .data-table td:nth-child(2) {
+  min-width: 200px;
+}
+
+.orders-table-container .data-table th:nth-child(3),
+.orders-table-container .data-table td:nth-child(3) {
+  min-width: 180px;
+}
+
+.orders-table-container .data-table th:nth-child(4),
+.orders-table-container .data-table td:nth-child(4) {
+  min-width: 100px;
+  text-align: center;
+}
+
+.orders-table-container .data-table th:nth-child(5),
+.orders-table-container .data-table td:nth-child(5) {
+  min-width: 120px;
+}
+
+.orders-table-container .data-table th:nth-child(6),
+.orders-table-container .data-table td:nth-child(6) {
+  min-width: 100px;
+  text-align: center;
+}
+
+/* Sellers Summary Section */
+.sellers-summary {
+  margin-top: 24px;
+}
+
+.sellers-summary h4 {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sellers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.seller-card {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.seller-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.seller-info h5 {
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.seller-info p {
+  margin: 0 0 8px 0;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.product-count {
+  display: inline-block;
+  padding: 4px 8px;
+  background: #667eea;
+  color: white;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Status badges for orders */
+.status-badge.pending {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.status-badge.confirmed {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-badge.shipped {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.status-badge.delivered {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.status-badge.cancelled {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+/* Responsive adjustments for orders and sellers */
+@media (max-width: 768px) {
+  .orders-table-container {
+    max-height: 300px;
+  }
+
+  .orders-table-container .data-table th,
+  .orders-table-container .data-table td {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  .orders-table-container .data-table th:nth-child(1),
+  .orders-table-container .data-table td:nth-child(1) {
+    min-width: 150px;
+  }
+
+  .orders-table-container .data-table th:nth-child(2),
+  .orders-table-container .data-table td:nth-child(2) {
+    min-width: 160px;
+  }
+
+  .sellers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .seller-card {
+    padding: 12px;
+  }
+}
+
+/* Responsive adjustments for seller details modal */
+@media (max-width: 768px) {
+  .seller-details-modal {
+    width: 98%;
+    max-height: 95vh;
+  }
+
+  .seller-details-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .details-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .label {
+    flex: none;
+    font-size: 14px;
+  }
+
+  .value {
+    text-align: left;
+    font-size: 14px;
+  }
+}
+
+

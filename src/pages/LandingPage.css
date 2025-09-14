@@ -1,0 +1,307 @@
+.landing-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  min-height: 100vh;
+  background: url('https://www.internetsearchinc.com/wp-content/uploads/2023/08/co2-ff.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: rgb(255, 255, 255);
+  font-family: 'Arial', sans-serif;
+  overflow: hidden;
+  text-shadow: 0 0 10px rgba(0,0,0,0.7);
+  padding-top: 0px;
+}
+
+.features {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin: 30px 0;
+  animation: fadeInUp 1.5s ease-out;
+}
+
+.feature {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 20px 30px;
+  border-radius: 10px;
+  max-width: 250px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+  transition: transform 0.3s ease;
+}
+
+.feature:hover {
+  transform: translateY(-10px);
+}
+
+h1, h3, p {
+  margin: 0 0 10px 0;
+}
+
+h1 {
+  font-size: 3rem;
+  animation: slideInLeft 1s ease-out 0.5s both;
+  color: yellow;
+}
+
+p {
+  font-size: 1.2rem;
+  animation: slideInRight 1s ease-out 0.7s both;
+}
+
+.landing-logo {
+  width: 200px;
+  height: auto;
+  margin-bottom: 20px;
+  animation: bounceIn 1.5s ease-out;
+  filter: sepia(1) hue-rotate(90deg) saturate(5);
+}
+
+.button-group {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  animation: fadeInUp 2s ease-out 1s both;
+}
+
+.btn {
+  padding: 12px 24px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.login-btn {
+  background-color: #2196F3;
+  color: white;
+}
+
+.login-btn:hover {
+  background-color: #1976D2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.signup-btn {
+  background-color: #FF9800;
+  color: white;
+}
+
+.signup-btn:hover {
+  background-color: #F57C00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+  p {
+    font-size: 1rem;
+  }
+  .button-group {
+    flex-direction: column;
+    align-items: center;
+  }
+  .features {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .feature {
+    max-width: 100%;
+  }
+}
+
+.landing-content {
+  text-align: center;
+  animation: fadeInUp 1s ease-out;
+  
+}
+
+.landing-logo {
+  width: 200px;
+  height: auto;
+  margin-bottom: 20px;
+  animation: bounceIn 1.5s ease-out;
+  filter: sepia(1) hue-rotate(90deg) saturate(5);
+}
+.description{
+  color:white;
+}
+h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  animation: slideInLeft 1s ease-out 0.5s both;
+  color: yellow;
+}
+p {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  animation: slideInLeft 1s ease-out 0.5s both;
+  color: rgb(0, 255, 55);
+}
+
+p {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  animation: slideInRight 1s ease-out 0.7s both;
+}
+
+.button-group {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.btn {
+  padding: 12px 24px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.login-btn {
+  background-color: #2196F3;
+  color: white;
+}
+
+.login-btn:hover {
+  background-color: #1976D2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.signup-btn {
+  background-color: #FF9800;
+  color: white;
+}
+
+.signup-btn:hover {
+  background-color: #F57C00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+  p {
+    font-size: 1rem;
+  }
+  .button-group {
+    flex-direction: column;
+    align-items: center;
+  }
+}

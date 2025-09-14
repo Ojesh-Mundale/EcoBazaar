@@ -7,8 +7,11 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.ecobazaar.model.Product;
 import com.ecobazaar.repository.ProductRepository;
@@ -58,8 +61,14 @@ public class ProductService {
 
     public ResponseEntity<?> getProductById(String id, String sellerEmail) {
         try {
-            Optional<Product> product = productRepository.findByIdAndSellerEmail(id, sellerEmail);
-            
+            Long productIdLong;
+            try {
+                productIdLong = Long.parseLong(id);
+            } catch (NumberFormatException e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid product ID format"));
+            }
+            Optional<Product> product = productRepository.findByIdAndSellerEmail(productIdLong, sellerEmail);
+
             if (product.isPresent()) {
                 return ResponseEntity.ok(Map.of("product", product.get()));
             } else {
@@ -72,7 +81,13 @@ public class ProductService {
 
     public ResponseEntity<?> updateProduct(String id, Product product, String sellerEmail) {
         try {
-            Optional<Product> existingProduct = productRepository.findByIdAndSellerEmail(id, sellerEmail);
+            Long productIdLong;
+            try {
+                productIdLong = Long.parseLong(id);
+            } catch (NumberFormatException e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid product ID format"));
+            }
+            Optional<Product> existingProduct = productRepository.findByIdAndSellerEmail(productIdLong, sellerEmail);
             
             if (existingProduct.isPresent()) {
                 Product productToUpdate = existingProduct.get();
@@ -109,7 +124,13 @@ public class ProductService {
 
     public ResponseEntity<?> deleteProduct(String id, String sellerEmail) {
         try {
-            Optional<Product> product = productRepository.findByIdAndSellerEmail(id, sellerEmail);
+            Long productIdLong;
+            try {
+                productIdLong = Long.parseLong(id);
+            } catch (NumberFormatException e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid product ID format"));
+            }
+            Optional<Product> product = productRepository.findByIdAndSellerEmail(productIdLong, sellerEmail);
             
             if (product.isPresent()) {
                 Product productToDelete = product.get();
@@ -131,6 +152,39 @@ public class ProductService {
             return ResponseEntity.ok(Map.of("products", products));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to fetch products: " + e.getMessage()));
+        }
+    }
+
+    public ResponseEntity<byte[]> getProductImage(Long productId, int imageIndex) {
+        try {
+            Optional<Product> productOpt = productRepository.findById(productId);
+            if (!productOpt.isPresent()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Product product = productOpt.get();
+            List<String> imageUrls = product.getImageUrls();
+
+            if (imageUrls == null || imageUrls.isEmpty() || imageIndex < 0 || imageIndex >= imageUrls.size()) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            String imageUrl = imageUrls.get(imageIndex);
+
+            // Fetch image bytes from URL
+            RestTemplate restTemplate = new RestTemplate();
+            byte[] imageBytes = restTemplate.getForObject(imageUrl, byte[].class);
+
+            // Determine content type (default to JPEG, can be improved with URL parsing)
+            MediaType contentType = MediaType.IMAGE_JPEG;
+
+            return ResponseEntity.ok()
+                    .contentType(contentType)
+                    .body(imageBytes);
+
+        } catch (Exception e) {
+            logger.error("Failed to fetch image for product {} index {}", productId, imageIndex, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }
