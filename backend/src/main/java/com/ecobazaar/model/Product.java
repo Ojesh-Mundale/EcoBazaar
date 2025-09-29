@@ -35,6 +35,10 @@ public class Product {
     @ElementCollection
     private List<String> imageUrls; // URLs for product images
     private boolean isActive;
+
+    // Embedding vector for Gemini embeddings
+    // Using a simple String to store serialized embedding for simplicity; can be changed to a more suitable type or handled by vector DB
+    private String embedding;
     
     // Default constructor
     public Product() {
@@ -195,5 +199,13 @@ public class Product {
     
     public void setIsActive(boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public String getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(String embedding) {
+        this.embedding = embedding;
     }
 }

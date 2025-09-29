@@ -15,7 +15,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Optional<Product> findByIdAndSellerEmail(Long id, String sellerEmail);
     List<Product> findBySellerEmailAndIsActive(String sellerEmail, boolean isActive);
     List<Product> findByCategoryAndIsActive(String category, boolean isActive);
+    List<Product> findByCategory(String category);
     List<Product> findByIsActive(boolean isActive);
+    List<Product> findByCarbonFootprintLessThan(double carbonFootprint);
+    List<Product> findByPriceLessThan(double price);
 
     @Query("SELECT p.sellerEmail as sellerEmail, SUM(p.carbonFootprint) as totalCarbon, COUNT(p) as productCount " +
            "FROM Product p WHERE p.isActive = true GROUP BY p.sellerEmail ORDER BY totalCarbon DESC")

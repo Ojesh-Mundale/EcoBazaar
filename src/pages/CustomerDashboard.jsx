@@ -4,6 +4,7 @@ import './CustomerDashboard.css';
 import './TrackOrderModal.css';
 import HamburgerMenu from '../components/HamburgerMenu';
 import CountdownTimer from '../components/CountdownTimer';
+import AssistantChat from '../components/AssistantChat';
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -49,6 +50,7 @@ const CustomerDashboard = () => {
   const [showPayment, setShowPayment] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showChatbot, setShowChatbot] = useState(false);
 
   const categories = ['all', 'Fashion', 'Personal Care', 'Office', 'Accessories', 'Electronics'];
 
@@ -1127,7 +1129,7 @@ const CustomerDashboard = () => {
           <div className={`nav-item ${activeSection === 'logout' ? 'active' : ''}`} onClick={handleLogout}>
             Logout
           </div>
-        </nav>
+      </nav>
       </aside>
 
       <main className="customer-main-content">
@@ -1142,6 +1144,24 @@ const CustomerDashboard = () => {
         </header>
 
         {renderContent()}
+
+        {/* Chatbot Icon */}
+        <div className="chatbot-container">
+          <button
+            className="chatbot-icon"
+            onClick={() => setShowChatbot(true)}
+            aria-label="Open Chatbot"
+            title="Ask me about eco-friendly products!"
+          >
+            💬
+          </button>
+        </div>
+
+        {/* Chatbot */}
+        <AssistantChat
+          isOpen={showChatbot}
+          onClose={() => setShowChatbot(false)}
+        />
       </main>
 
       {showOrderDetails && renderOrderDetails()}
